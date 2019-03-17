@@ -265,19 +265,28 @@ class CC1101:
         self.strobe(SFRX)
         self.strobe(SRX)
         print("ready to detect data")
-
-    def receiveData(self, length):
+    def setupReceive(self, length):
         self.writeSingleByte(PKTLEN, length)
         self.strobe(SRX)
-        print("waiting for data")
-
+    def waitForData(self, timeout):
+        count = 0
         while self.gdo0.value == False:
-            pass 
-        #detected rising edge
-
+            if count >= timeout:
+                return True
+            count += 1
+        # detected rising edge
+        count = 0
         while self.gdo0.value == True:
-            pass
-        #detected falling edge
+            if count >= timeout:
+                return  True
+            count +=1
+        return False
+            # detected falling edge
+    def receiveData(self, length, timeout):
+
+        self.setupReceive(length)
+        if self.waitForData(timeout):
+            return 1/0
 
         data_len = length#+2 # add 2 status bytes
         data = self.readBurst(RXFIFO, data_len)
